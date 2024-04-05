@@ -356,6 +356,51 @@ class DatabaseHelper {
     });
   }
 
+  Future<List> getProfessorOpenCourse(String professorID) async {
+    try {
+      Database db = await instance.database;
+      List<Map<String, dynamic>> maps = await db.query(
+        'course_table',
+        where: 'professor_id = ?',
+        whereArgs: [professorID]
+      );
+      return List.generate(maps.length, (index) {
+        return Courses.fromMap(maps[index]);
+      });
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<int> addNewProfessor(String name, String subtitle, String account, String password, String imagePath) async {
+    Database db = await instance.database;
+    try {
+      List<Map<String, dynamic>> temp = await db.query('professor_table');
+      var buffer = List.generate(temp.length, (i) {
+        return Professor.fromMap(temp[i]);
+      });
+      String newProfessorID = 'E${(int.parse(
+          buffer.last.professorId.substring(1)
+      ) + 1).toString().padLeft(3, '0')}';
+      var result = await db.insert('professor_table', Professor(
+          professorId: newProfessorID,
+          name: name,
+          title: subtitle,
+          account: account,
+          password: password,
+          imagePath: imagePath,
+          showCourse: false
+      ).toMap());
+      if (result > 0) {
+        return result;
+      } else {
+        return -1;
+      }
+    } catch (e) {
+      return -1;
+    }
+  }
+
   Future<List<Enrollment>> getEnrollmentDataByCourseID(String courseID) async {
     Database db = await instance.database;
     var res = await db.query(
